@@ -11,6 +11,7 @@
 import json
 import os
 from pathlib import Path
+from typing import Optional
 
 from agent.base_agent import AgentSystem
 from agent.llm import chat_with_agent
@@ -35,6 +36,7 @@ class MetaAgent(AgentSystem):
         repo_path: str,
         eval_path: str,
         iterations_left: int = None,
+        domain_name: Optional[str] = None,
     ) -> list:
         """Analyse past performance and modify the codebase.
 
@@ -43,11 +45,13 @@ class MetaAgent(AgentSystem):
             eval_path:       Path to the previous generation's output directory
                              (contains scores.json and other eval artifacts).
             iterations_left: Number of remaining evolution generations.
+            domain_name:     Active evaluation domain (used to pre-load domain file).
 
         Returns:
             The full conversation message history.
         """
         eval_summary = _load_eval_summary(eval_path)
+        codebase_context = _load_codebase_context(repo_path, domain_name)
 
         instruction = f"""You are a MetaAgent — a self-referential self-improving AI.
 
@@ -58,15 +62,17 @@ Iterations remaining: {iterations_left if iterations_left is not None else "unkn
 ## Previous generation evaluation results
 {eval_summary}
 
+## Current codebase (key files pre-loaded — use read_file only for files not shown below)
+{codebase_context}
+
 ## Your goal
 Improve the AI agent system so it scores higher on the evaluation domain.
 
 ## What you can do
-1. Explore the repository with list_dir and read_file.
-2. Study task_agent.py to understand the current task-solving strategy.
-3. Study meta_agent.py (this file) to understand the self-improvement strategy.
-4. Review the evaluation results to identify weaknesses.
-5. Edit files with write_file or replace_in_file to implement improvements.
+1. Study the pre-loaded files above to understand the current strategy.
+2. Review the evaluation results to identify specific failure patterns.
+3. Edit files with write_file or replace_in_file to implement improvements.
+4. Use read_file / list_dir only for files not shown above.
 
 ## What you should know
 - You CAN modify meta_agent.py (this very file) to improve how future
@@ -77,7 +83,7 @@ Improve the AI agent system so it scores higher on the evaluation domain.
 - Make targeted, high-impact changes based on evidence from the eval results.
 - If eval results show specific failure patterns, address them directly.
 
-Start by listing the repository structure, then read the relevant files."""
+Study the pre-loaded files and evaluation results above, then make your improvements."""
 
         msg_history = chat_with_agent(
             instruction,
@@ -89,6 +95,33 @@ Start by listing the repository structure, then read the relevant files."""
         )
 
         return msg_history
+
+
+def _load_codebase_context(repo_path: str, domain_name: Optional[str] = None) -> str:
+    """Read key source files and return them formatted for the LLM prompt."""
+    root = Path(repo_path)
+    files_to_load: list[Path] = [
+        root / "task_agent.py",
+        root / "meta_agent.py",
+    ]
+
+    # Add the active domain file if known
+    if domain_name:
+        domain_file = root / "domains" / domain_name / "domain.py"
+        if domain_file.exists():
+            files_to_load.append(domain_file)
+
+    sections: list[str] = []
+    for fpath in files_to_load:
+        if fpath.exists():
+            try:
+                content = fpath.read_text(encoding="utf-8", errors="replace")
+                rel = fpath.relative_to(root)
+                sections.append(f"### {rel}\n```python\n{content}\n```")
+            except Exception as exc:
+                sections.append(f"### {fpath.name}\n(Could not read: {exc})")
+
+    return "\n\n".join(sections) if sections else "(No files pre-loaded)"
 
 
 def _load_eval_summary(eval_path: str) -> str:

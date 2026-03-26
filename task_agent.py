@@ -20,6 +20,10 @@ class TaskAgent(AgentSystem):
     improve it over time.
     """
 
+    def __init__(self, model: str = None, log=print):
+        # Default to gpt-4o-mini: higher rate limits (150 req/day) than gpt-4o (50/day)
+        super().__init__(model=model or "gpt-4o-mini", log=log)
+
     def forward(self, inputs: dict) -> tuple[str, list]:
         """Solve one task instance.
 

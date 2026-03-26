@@ -58,6 +58,7 @@ from utils.git_utils import (
 # ---------------------------------------------------------------------------
 _DOMAIN_REGISTRY: dict[str, tuple[str, str]] = {
     "math_qa": ("domains.math_qa.domain", "MathQADomain"),
+    "word_problems": ("domains.word_problems.domain", "WordProblemsDomain"),
 }
 
 
@@ -81,12 +82,13 @@ def _evaluate_task_agent(
     domain_name: str,
     repo_path: str,
     n_samples: int,
+    task_model: str = None,
 ) -> dict:
     """Evaluate task_agent.py in a fresh subprocess to pick up any code changes."""
     module_path, cls_name = _DOMAIN_REGISTRY[domain_name]
 
     eval_code = f"""
-import sys, json
+import sys, json, os
 sys.path.insert(0, {repo_path!r})
 import importlib
 
@@ -96,7 +98,7 @@ DomainClass = getattr(mod, {cls_name!r})
 from task_agent import TaskAgent
 
 domain = DomainClass()
-agent = TaskAgent(log=lambda m: None)
+agent = TaskAgent(model={task_model!r}, log=lambda m: None)
 results = domain.evaluate(agent, n={n_samples!r})
 print(json.dumps(results))
 """
@@ -141,6 +143,8 @@ def generate_loop(
     output_dir: str = None,
     repo_path: str = ".",
     resume_from: str = None,
+    task_model: str = None,
+    meta_model: str = None,
 ) -> str:
     repo_path = os.path.abspath(repo_path)
 
@@ -170,9 +174,8 @@ def generate_loop(
     log.info(f"Output directory : {output_dir}")
     log.info(f"Domain           : {domain_name}")
     log.info(f"Max generations  : {max_generations}")
-
-    # Git
-    init_repo(repo_path)
+        log.info(f"Task model       : {task_model or 'default'}")
+        log.info(f"Meta model       : {meta_model or 'default'}")
     root_commit = get_head_commit(repo_path)
     log.info(f"Root commit      : {root_commit}")
 
@@ -182,7 +185,7 @@ def generate_loop(
 
     if not archive:
         log.info("Evaluating initial task agent …")
-        initial_results = _evaluate_task_agent(domain_name, repo_path, eval_samples)
+        initial_results = _evaluate_task_agent(domain_name, repo_path, eval_samples, task_model)
         log.info(f"Initial score: {initial_results['score']:.4f}  (n={initial_results['n']})")
         if "error" in initial_results:
             log.warning(f"Eval error: {initial_results['error']}")
@@ -228,11 +231,12 @@ def generate_loop(
             # ── Run MetaAgent ────────────────────────────────────────────
             parent_eval_dir = os.path.join(output_dir, f"gen_{parent_id}")
             log.info("Running MetaAgent …")
-            meta = MetaAgent(log=log.info)
+            meta = MetaAgent(model=meta_model, log=log.info)
             meta.forward(
                 repo_path=repo_path,
                 eval_path=parent_eval_dir,
                 iterations_left=max_generations - gen_id,
+                domain_name=domain_name,
             )
             log.info("MetaAgent finished.")
 
@@ -246,7 +250,7 @@ def generate_loop(
             # ── Evaluate ─────────────────────────────────────────────────
             if diff.strip():
                 log.info("Evaluating modified task agent …")
-                results = _evaluate_task_agent(domain_name, repo_path, eval_samples)
+                results = _evaluate_task_agent(domain_name, repo_path, eval_samples, task_model)
                 log.info(
                     f"Gen {gen_id} score: {results['score']:.4f}  (n={results['n']})"
                 )
@@ -322,6 +326,16 @@ if __name__ == "__main__":
         default=None,
         help="Resume an existing run from this output directory",
     )
+    parser.add_argument(
+        "--task_model",
+        default=None,
+        help="Model for TaskAgent evaluation (default: gpt-4o-mini)",
+    )
+    parser.add_argument(
+        "--meta_model",
+        default=None,
+        help="Model for MetaAgent improvement (default: gpt-4o)",
+    )
 
     args = parser.parse_args()
     generate_loop(
@@ -331,4 +345,6 @@ if __name__ == "__main__":
         parent_selection=args.parent_selection,
         output_dir=args.output_dir,
         resume_from=args.resume_from,
+        task_model=args.task_model,
+        meta_model=args.meta_model,
     )

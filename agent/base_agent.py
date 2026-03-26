@@ -7,7 +7,7 @@ class AgentSystem(ABC):
     """Base class for all agents in the HyperAgents system."""
 
     def __init__(self, model: str = None, log: Callable = print):
-        self.model = model or os.getenv("MODEL", "claude-opus-4-5")
+        self.model = model or os.getenv("MODEL", "gpt-4o")
         self.log = log
 
     @abstractmethod
