@@ -174,8 +174,8 @@ def generate_loop(
     log.info(f"Output directory : {output_dir}")
     log.info(f"Domain           : {domain_name}")
     log.info(f"Max generations  : {max_generations}")
-        log.info(f"Task model       : {task_model or 'default'}")
-        log.info(f"Meta model       : {meta_model or 'default'}")
+    log.info(f"Task model       : {task_model or 'default'}")
+    log.info(f"Meta model       : {meta_model or 'default'}")
     root_commit = get_head_commit(repo_path)
     log.info(f"Root commit      : {root_commit}")
 
