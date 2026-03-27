@@ -32,6 +32,8 @@ import subprocess
 import sys
 from datetime import datetime
 
+import openai
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -233,12 +235,21 @@ def generate_loop(
             parent_eval_dir = os.path.join(output_dir, f"gen_{parent_id}")
             log.info("Running MetaAgent …")
             meta = MetaAgent(model=meta_model, log=log.info)
-            meta.forward(
-                repo_path=repo_path,
-                eval_path=parent_eval_dir,
-                iterations_left=max_generations - gen_id,
-                domain_name=domain_name,
-            )
+            try:
+                meta.forward(
+                    repo_path=repo_path,
+                    eval_path=parent_eval_dir,
+                    iterations_left=max_generations - gen_id,
+                    domain_name=domain_name,
+                )
+            except openai.RateLimitError as exc:
+                log.warning(f"RateLimitError from MetaAgent: {exc}; skipping generation.")
+                results = {"score": 0.0, "results": [], "n": 0}
+                with open(os.path.join(gen_dir, "scores.json"), "w", encoding="utf-8") as f:
+                    json.dump(results, f, indent=2)
+                archive = add_node(archive, archive_path, gen_id, parent_id=parent_id, score=0.0)
+                parent_id = select_parent(archive, method=parent_selection)
+                continue
             log.info("MetaAgent finished.")
 
             # ── Capture diff ─────────────────────────────────────────────

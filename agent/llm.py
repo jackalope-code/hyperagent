@@ -251,6 +251,7 @@ def chat_with_agent(
         kwargs: dict = dict(model=model, max_tokens=_max_tokens, messages=messages)
         if tools:
             kwargs["tools"] = tools
+            kwargs["tool_choice"] = "required" if turn == 0 else "auto"
 
         response = client.chat.completions.create(**kwargs)
         choice = response.choices[0]

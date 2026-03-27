@@ -56,8 +56,15 @@ def apply_patch(repo_path: str, patch_path: str) -> bool:
 
 
 def reset_to_commit(repo_path: str, commit: str) -> None:
-    """Hard-reset the working tree to commit, discarding all changes."""
-    _run(["git", "reset", "--hard", commit], repo_path)
+    """Restore the working tree to commit without moving HEAD.
+
+    Uses ``git checkout <commit> -- .`` so the branch pointer stays at its
+    current position.  After restoring files, any unstaged leftovers are
+    cleaned and a new commit is created so the branch always advances.
+    """
+    # Restore every tracked path to the state it had at `commit`
+    _run(["git", "checkout", commit, "--", "."], repo_path)
+    # Remove any untracked files / directories that were not in `commit`
     _run(["git", "clean", "-fd"], repo_path)
 
 

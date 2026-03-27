@@ -83,7 +83,9 @@ Improve the AI agent system so it scores higher on the evaluation domain.
 - Make targeted, high-impact changes based on evidence from the eval results.
 - If eval results show specific failure patterns, address them directly.
 
-Study the pre-loaded files and evaluation results above, then make your improvements."""
+Study the pre-loaded files and evaluation results above, then make your improvements.
+
+IMPORTANT: You MUST call write_file or replace_in_file at least once to make a concrete code change. Do not just analyse — edit files."""
 
         msg_history = chat_with_agent(
             instruction,
