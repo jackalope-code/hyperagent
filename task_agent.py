@@ -51,9 +51,9 @@ Respond in JSON format:
             tools_available="none",
         )
 
-        prediction = None
+        prediction = "None"
         try:
-            last = msg_history[-1]["content"] if msg_history else ""
+            last = msg_history[-1]["content"]
             text = _get_text(last)
             data = extract_json(text)
             if data and "response" in data:
@@ -61,7 +61,7 @@ Respond in JSON format:
         except Exception:
             pass
 
-        return prediction if prediction is not None else "None", msg_history
+        return prediction, msg_history
 
 
 def _get_text(content) -> str:

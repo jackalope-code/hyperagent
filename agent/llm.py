@@ -242,6 +242,8 @@ def chat_with_agent(
     """
     client = _make_client()
     tools = _TOOLS if tools_available == "all" else []
+    if tools_available not in ("all", "none"):
+        logging(f"[llm] WARNING: unknown tools_available={tools_available!r}; defaulting to 'none'")
     messages = list(msg_history) + [{"role": "user", "content": instruction}]
     _large = os.environ.get("USE_LARGER_CONTEXT", "false").strip().lower() == "true"
     _max_tokens = 8096 if _large else 2048

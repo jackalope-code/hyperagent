@@ -15,184 +15,205 @@ from fractions import Fraction
 from domains.base_domain import Domain
 
 _SAMPLES = [
-    # ── Easy tier ────────────────────────────────────────────────────────────
+    # ── Easy tier  (~65% expected gpt-4o-mini baseline) ──────────────────────
+    # These require careful multi-step counting/arithmetic — not single-formula lookups.
     {
         "id": "E1",
         "tier": "easy",
         "question": (
-            "Three consecutive integers have a sum of 57. "
-            "What is the smallest of the three integers?"
+            "How many 3-digit positive integers are divisible by both 4 and 6?"
         ),
-        "answer": "18",
+        # LCM(4,6)=12; multiples of 12 in [100,999]: floor(999/12)-floor(99/12) = 83-8 = 75
+        "answer": "75",
     },
     {
         "id": "E2",
         "tier": "easy",
         "question": (
-            "Solve the system of equations: 4x − 3y = 17 and 2x + y = 11. "
-            "What is the value of x?"
+            "A bag contains 3 red marbles and 5 blue marbles. Two marbles are "
+            "drawn without replacement. The probability that both are blue can be "
+            "written as p/q in lowest terms. What is p + q?"
         ),
-        "answer": "5",
+        # P = C(5,2)/C(8,2) = 10/28 = 5/14; p+q = 19
+        "answer": "19",
     },
     {
         "id": "E3",
         "tier": "easy",
         "question": (
-            "A right triangle has legs of length 5 cm and 12 cm. "
-            "What is the area of the triangle in square centimetres?"
+            "The first term of a geometric sequence is 2 and the fifth term is 162. "
+            "What is the common ratio? (Assume the ratio is a positive integer.)"
         ),
-        "answer": "30",
+        # 2·r^4 = 162 → r^4 = 81 → r = 3
+        "answer": "3",
     },
     {
         "id": "E4",
         "tier": "easy",
-        "question": "What is the units digit of 7^2026?",
-        "answer": "9",
+        "question": (
+            "Find the sum of all integers from 1 to 99 inclusive that leave a "
+            "remainder of 3 when divided by 7."
+        ),
+        # Terms: 3,10,17,...,94 (count=14); sum = 14*(3+94)/2 = 679
+        "answer": "679",
     },
     {
         "id": "E5",
         "tier": "easy",
         "question": (
-            "How many integers from 1 to 200 inclusive are divisible by 6 "
-            "but not divisible by 9?"
+            "What is the remainder when 1! + 2! + 3! + 4! + 5! + 6! + 7! + 8! + 9! + 10! "
+            "is divided by 9?"
         ),
-        "answer": "22",
+        # For n≥6, n! is divisible by 9; sum of 1!..5! = 1+2+6+24+120 = 153 = 17*9 → rem 0
+        "answer": "0",
     },
     {
         "id": "E6",
         "tier": "easy",
         "question": (
-            "Two positive integers have a product of 180 and a greatest common "
-            "divisor of 6. What is their least common multiple?"
+            "How many integers between 1 and 1000 inclusive are divisible by "
+            "at least one of 3, 5, or 7?"
         ),
-        "answer": "30",
+        # inclusion-exclusion: 333+200+142-66-47-28+9 = 543
+        "answer": "543",
     },
-    # ── Medium tier ───────────────────────────────────────────────────────────
+    # ── Medium tier  (~40% expected baseline) ────────────────────────────────
     {
         "id": "M1",
         "tier": "medium",
         "question": (
-            "How many 3-digit positive integers have digits that are "
-            "in strictly increasing order from left to right?"
+            "How many 6-digit positive integers have digits in non-decreasing order "
+            "from left to right, using only the digits 1 through 9 (no zeros)?"
         ),
-        "answer": "84",
+        # Non-decreasing sequences of length 6 from {1..9}: C(9+6-1,6) = C(14,6) = 3003
+        "answer": "3003",
     },
     {
         "id": "M2",
         "tier": "medium",
         "question": (
-            "What is the largest prime factor of 12! ÷ 10! "
-            "(where n! denotes n factorial)?"
+            "For how many integers n with 1 ≤ n ≤ 200 is n³ − n² divisible by 4?"
         ),
-        "answer": "11",
+        # n^2(n-1) div by 4: n even (100 values) OR n≡1(mod 4) (50 values) → 150
+        "answer": "150",
     },
     {
         "id": "M3",
         "tier": "medium",
         "question": (
-            "A geometric sequence has first term 3 and common ratio 2. "
-            "What is the sum of the first 8 terms?"
+            "A circle with centre O and radius 5 is given. From an external point P "
+            "with OP = 13, two tangent lines are drawn, touching the circle at A and B. "
+            "What is the area of quadrilateral OAPB?"
         ),
-        "answer": "765",
+        # PA = PB = sqrt(169-25) = 12; area = OA*PA = 5*12 = 60
+        "answer": "60",
     },
     {
         "id": "M4",
         "tier": "medium",
         "question": (
-            "In how many distinct ways can the letters of the word ARRANGE "
-            "be rearranged (including the original arrangement)?"
+            "Compute the sum 1·2 + 2·3 + 3·4 + … + 50·51."
         ),
-        "answer": "1260",
+        # Sum = n(n+1)(n+2)/3 for n=50 = 50*51*52/3 = 44200
+        "answer": "44200",
     },
     {
         "id": "M5",
         "tier": "medium",
-        "question": "What is the remainder when 2^50 is divided by 7?",
-        "answer": "4",
+        "question": (
+            "The polynomial x³ − 6x² + 11x − 6 has three integer roots. "
+            "What is the sum of the squares of its roots?"
+        ),
+        # Roots 1,2,3; sum of squares = 1+4+9 = 14
+        "answer": "14",
     },
     {
         "id": "M6",
         "tier": "medium",
         "question": (
-            "A ball is dropped from a height of 64 metres. After each bounce "
-            "it rises to exactly half the height from which it fell. "
-            "What is the total distance travelled by the ball before it comes "
-            "to rest (in metres)?"
+            "What is the remainder when 17^2026 is divided by 13?"
         ),
-        "answer": "192",
+        # 17≡4(mod13); 4^6≡1(mod13); 2026=6*337+4; 4^4≡(4^3)*4=(-1)*4=-4≡9(mod13)
+        "answer": "9",
     },
     {
         "id": "M7",
         "tier": "medium",
         "question": (
-            "How many positive integers less than 1000 are divisible by 4 or "
-            "by 6 (or both)?"
+            "What is the largest prime factor of 2^8 − 1?"
         ),
-        "answer": "332",
+        # 2^8-1 = 255 = 3*5*17; largest prime factor = 17
+        "answer": "17",
     },
     {
         "id": "M8",
         "tier": "medium",
         "question": (
-            "A regular hexagon has an area of 54√3 square units. "
-            "What is the side length of the hexagon?"
+            "How many ordered pairs of non-negative integers (a, b) satisfy "
+            "a + 2b ≤ 20?"
         ),
-        "answer": "6",
+        # For b=0..10: (21-2b) values of a; sum = 21+19+...+1 = 11^2 = 121
+        "answer": "121",
     },
-    # ── Hard tier ─────────────────────────────────────────────────────────────
+    # ── Hard tier  (~25% expected baseline) ──────────────────────────────────
     {
         "id": "H1",
         "tier": "hard",
         "question": (
-            "How many ordered pairs (x, y) of positive integers satisfy the "
-            "equation x + y + xy = 98?"
+            "What is the least common multiple of all integers from 1 to 15 inclusive?"
         ),
-        "answer": "4",
+        # LCM = 2^3 * 3^2 * 5 * 7 * 11 * 13 = 360360
+        "answer": "360360",
     },
     {
         "id": "H2",
         "tier": "hard",
         "question": (
-            "The sum of the first n terms of a sequence is given by S(n) = 3n² + 5n. "
-            "What is the 15th term of the sequence?"
+            "A 3×3 grid of cells is to be coloured with three colours (Red, Blue, Green) "
+            "so that each row and each column contains exactly one cell of each colour. "
+            "How many valid colourings are there?"
         ),
-        "answer": "92",
+        # 3x3 Latin squares = 12
+        "answer": "12",
     },
     {
         "id": "H3",
         "tier": "hard",
         "question": (
-            "A right triangle has legs of length 8 and 15 (and hypotenuse 17). "
-            "What is the radius of the inscribed circle (incircle) of the triangle?"
+            "A sequence satisfies a₁ = 1 and aₙ₊₁ = aₙ / (1 + aₙ) for all n ≥ 1. "
+            "What is 1 / a₁₀₀?"
         ),
-        "answer": "3",
+        # bₙ = 1/aₙ satisfies bₙ₊₁ = bₙ + 1, b₁ = 1 → bₙ = n → 1/a₁₀₀ = 100
+        "answer": "100",
     },
     {
         "id": "H4",
         "tier": "hard",
         "question": (
-            "A fair coin is tossed 10 times. In how many of the 1024 equally "
-            "likely outcomes do exactly 4 heads appear?"
+            "In how many ways can a 2×10 rectangle be completely tiled "
+            "using 1×2 dominoes (which may be placed horizontally or vertically)?"
         ),
-        "answer": "210",
+        # T(n): T(1)=1,T(2)=2,T(n)=T(n-1)+T(n-2); T(10)=89
+        "answer": "89",
     },
     {
         "id": "H5",
         "tier": "hard",
         "question": (
-            "What is the sum of all positive integers less than 100 that are "
-            "coprime to 100 (i.e. share no common factor greater than 1 with 100)?"
+            "A committee of 3 people is chosen at random from a group of 7 boys "
+            "and 5 girls. How many committees include at least one girl?"
         ),
-        "answer": "2000",
+        # C(12,3) - C(7,3) = 220 - 35 = 185
+        "answer": "185",
     },
     {
         "id": "H6",
         "tier": "hard",
         "question": (
-            "Let f(n) = n² − 4n + 7. For how many integers n with 1 ≤ n ≤ 20 "
-            "is f(n) divisible by 3?"
+            "What is the greatest common divisor of 3^2026 − 1 and 3^2021 − 1?"
         ),
-        "answer": "7",
+        # GCD(3^a-1, 3^b-1) = 3^gcd(a,b)-1; gcd(2026,2021)=gcd(2021,5)=gcd(5,1)=1; answer=2
+        "answer": "2",
     },
 ]
 
