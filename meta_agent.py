@@ -100,10 +100,9 @@ Study the pre-loaded files and evaluation results above, then make your improvem
 def _load_codebase_context(repo_path: str, domain_name: Optional[str] = None) -> str:
     """Read key source files and return them formatted for the LLM prompt."""
     root = Path(repo_path)
-    files_to_load: list[Path] = [
-        root / "task_agent.py",
-        root / "meta_agent.py",
-    ]
+    # Only pre-load task_agent.py and the domain file — not meta_agent.py itself
+    # (it's large and adds too many tokens; the agent can read_file it if needed)
+    files_to_load: list[Path] = [root / "task_agent.py"]
 
     # Add the active domain file if known
     if domain_name:
@@ -111,11 +110,15 @@ def _load_codebase_context(repo_path: str, domain_name: Optional[str] = None) ->
         if domain_file.exists():
             files_to_load.append(domain_file)
 
+    _MAX_FILE_CHARS = 2500  # keep prompt compact within 8k-token limit
+
     sections: list[str] = []
     for fpath in files_to_load:
         if fpath.exists():
             try:
                 content = fpath.read_text(encoding="utf-8", errors="replace")
+                if len(content) > _MAX_FILE_CHARS:
+                    content = content[:_MAX_FILE_CHARS] + "\n# ...(truncated)"
                 rel = fpath.relative_to(root)
                 sections.append(f"### {rel}\n```python\n{content}\n```")
             except Exception as exc:
