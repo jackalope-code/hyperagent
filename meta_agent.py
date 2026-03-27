@@ -110,7 +110,9 @@ def _load_codebase_context(repo_path: str, domain_name: Optional[str] = None) ->
         if domain_file.exists():
             files_to_load.append(domain_file)
 
-    _MAX_FILE_CHARS = 2500  # keep prompt compact within 8k-token limit
+    import os as _os
+    _large = _os.environ.get("USE_LARGER_CONTEXT", "false").strip().lower() == "true"
+    _MAX_FILE_CHARS = 8000 if _large else 2500  # keep prompt compact within token limit
 
     sections: list[str] = []
     for fpath in files_to_load:

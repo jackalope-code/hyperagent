@@ -243,9 +243,12 @@ def chat_with_agent(
     client = _make_client()
     tools = _TOOLS if tools_available == "all" else []
     messages = list(msg_history) + [{"role": "user", "content": instruction}]
+    _large = os.environ.get("USE_LARGER_CONTEXT", "false").strip().lower() == "true"
+    _max_tokens = 8096 if _large else 2048
+    _tool_result_limit = 8000 if _large else 2000
 
     for turn in range(max_turns):
-        kwargs: dict = dict(model=model, max_tokens=2048, messages=messages)
+        kwargs: dict = dict(model=model, max_tokens=_max_tokens, messages=messages)
         if tools:
             kwargs["tools"] = tools
 
@@ -281,7 +284,7 @@ def chat_with_agent(
                 result = _execute_tool(name, inputs, working_dir, logging)
                 logging(f"  -> {result[:300]!r}")
                 # Truncate long results to keep message history within token budget
-                trimmed = result if len(result) <= 2000 else result[:2000] + "\n...(truncated)"
+                trimmed = result if len(result) <= _tool_result_limit else result[:_tool_result_limit] + "\n...(truncated)"
                 messages.append(
                     {"role": "tool", "tool_call_id": tc.id, "content": trimmed}
                 )
