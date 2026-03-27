@@ -78,7 +78,11 @@ Improve the AI agent system so it scores higher on the evaluation domain.
 - You CAN modify meta_agent.py (this very file) to improve how future
   improvements are generated.  Meta-level improvements accumulate.
 - You CAN modify task_agent.py to improve task performance directly.
-- You CAN modify agent/llm.py, utils/, or domains/ if beneficial.
+- You CAN modify agent/llm.py or utils/ if beneficial.
+- Do NOT modify files under domains/ — domain code is infrastructure, not a
+  target for optimisation.  Modifying it will break the evaluation harness.
+- The forward() return signature of TaskAgent MUST remain (prediction, msg_history).
+  Do not add or remove return values; the evaluation harness unpacks exactly two.
 - Evaluation runs automatically after you finish — do not try to run it.
 - Make targeted, high-impact changes based on evidence from the eval results.
 - If eval results show specific failure patterns, address them directly.

@@ -43,6 +43,10 @@ Respond in JSON format:
     "response": <your answer here>
 }}"""
 
+        # chat_with_agent(instruction, model, msg_history, logging,
+        #                 tools_available, working_dir, max_turns)
+        # tools_available must be "all" or "none" — no other values.
+        # No extra keyword arguments are accepted.
         msg_history = chat_with_agent(
             instruction,
             model=self.model,

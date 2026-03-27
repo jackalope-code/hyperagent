@@ -251,7 +251,7 @@ class CompetitionMathDomain(Domain):
     name = "competition_math"
 
     def get_samples(self, split: str = "train", n: int = -1) -> list[dict]:
-        samples = [
+        all_samples = [
             {
                 "id": s["id"],
                 "tier": s["tier"],
@@ -261,7 +261,18 @@ class CompetitionMathDomain(Domain):
             }
             for s in _SAMPLES
         ]
-        return samples[:n] if n > 0 else samples
+        # Interleave tiers so that any prefix of n samples contains a mix of
+        # Easy / Medium / Hard problems.  This ensures --eval_samples 14 tests
+        # the Hard tier rather than only Easy + Medium.
+        easy   = [s for s in all_samples if s["tier"] == "easy"]
+        medium = [s for s in all_samples if s["tier"] == "medium"]
+        hard   = [s for s in all_samples if s["tier"] == "hard"]
+        interleaved: list[dict] = []
+        for i in range(max(len(easy), len(medium), len(hard))):
+            if i < len(easy):   interleaved.append(easy[i])
+            if i < len(medium): interleaved.append(medium[i])
+            if i < len(hard):   interleaved.append(hard[i])
+        return interleaved[:n] if n > 0 else interleaved
 
     def score(self, sample: dict, prediction: str) -> float:
         expected_str = sample["answer"].strip()
