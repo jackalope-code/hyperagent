@@ -59,6 +59,7 @@ from utils.git_utils import (
 _DOMAIN_REGISTRY: dict[str, tuple[str, str]] = {
     "math_qa": ("domains.math_qa.domain", "MathQADomain"),
     "word_problems": ("domains.word_problems.domain", "WordProblemsDomain"),
+    "competition_math": ("domains.competition_math.domain", "CompetitionMathDomain"),
 }
 
 
